@@ -1,0 +1,246 @@
+@import "tailwindcss";
+
+:root {
+  /* Default Material Theme Builder Scheme (Light — Seed #B33B15) before client hydration */
+  --md-sys-color-primary: #8F4C38;
+  --md-sys-color-surface-tint: #8F4C38;
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-primary-container: #FFDBD1;
+  --md-sys-color-on-primary-container: #723523;
+  --md-sys-color-inverse-primary: #FFB5A0;
+
+  --md-sys-color-secondary: #77574E;
+  --md-sys-color-on-secondary: #FFFFFF;
+  --md-sys-color-secondary-container: #FFDBD1;
+  --md-sys-color-on-secondary-container: #5D4037;
+
+  --md-sys-color-tertiary: #6C5D2F;
+  --md-sys-color-on-tertiary: #FFFFFF;
+  --md-sys-color-tertiary-container: #F5E1A7;
+  --md-sys-color-on-tertiary-container: #534619;
+
+  --md-sys-color-error: #BA1A1A;
+  --md-sys-color-on-error: #FFFFFF;
+  --md-sys-color-error-container: #FFDAD6;
+  --md-sys-color-on-error-container: #93000A;
+
+  --md-sys-color-background: #FFF8F6;
+  --md-sys-color-on-background: #231917;
+  --md-sys-color-surface: #FFF8F6;
+  --md-sys-color-surface-dim: #E8D6D2;
+  --md-sys-color-surface-bright: #FFF8F6;
+  --md-sys-color-surface-container-lowest: #FFFFFF;
+  --md-sys-color-surface-container-low: #FFF1ED;
+  --md-sys-color-surface-container: #FCEAE5;
+  --md-sys-color-surface-container-high: #F7E4E0;
+  --md-sys-color-surface-container-highest: #F1DFDA;
+  --md-sys-color-on-surface: #231917;
+  --md-sys-color-surface-variant: #F5DED8;
+  --md-sys-color-on-surface-variant: #53433F;
+  --md-sys-color-inverse-surface: #392E2B;
+  --md-sys-color-inverse-on-surface: #FFEDE8;
+  --md-sys-color-outline: #85736E;
+  --md-sys-color-outline-variant: #D8C2BC;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-scrim: #000000;
+
+  --md-sys-color-primary-fixed: #FFDBD1;
+  --md-sys-color-on-primary-fixed: #3A0B01;
+  --md-sys-color-primary-fixed-dim: #FFB5A0;
+  --md-sys-color-on-primary-fixed-variant: #723523;
+  --md-sys-color-secondary-fixed: #FFDBD1;
+  --md-sys-color-on-secondary-fixed: #2C150F;
+  --md-sys-color-secondary-fixed-dim: #E7BDB2;
+  --md-sys-color-on-secondary-fixed-variant: #5D4037;
+  --md-sys-color-tertiary-fixed: #F5E1A7;
+  --md-sys-color-on-tertiary-fixed: #231B00;
+  --md-sys-color-tertiary-fixed-dim: #D8C58D;
+  --md-sys-color-on-tertiary-fixed-variant: #534619;
+
+  /* Official Material 3 Expressive 10-step Corner Radius Scale */
+  --md-sys-shape-corner-none: 0px;
+  --md-sys-shape-corner-extra-small: 4px;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-large-increased: 20px;
+  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-extra-large-increased: 32px;
+  --md-sys-shape-corner-extra-extra-large: 48px;
+  --md-sys-shape-corner-full: 9999px;
+
+  /* Official Material 3 Expressive Motion Physics Web Conversion Tokens */
+  --md-sys-motion-spring-fast-spatial: 350ms cubic-bezier(0.42, 1.67, 0.21, 0.90);
+  --md-sys-motion-spring-default-spatial: 500ms cubic-bezier(0.38, 1.21, 0.22, 1.00);
+  --md-sys-motion-spring-slow-spatial: 650ms cubic-bezier(0.39, 1.29, 0.35, 0.98);
+  --md-sys-motion-spring-fast-effects: 150ms cubic-bezier(0.31, 0.94, 0.34, 1.00);
+  --md-sys-motion-spring-default-effects: 200ms cubic-bezier(0.34, 0.80, 0.34, 1.00);
+  --md-sys-motion-spring-slow-effects: 300ms cubic-bezier(0.34, 0.88, 0.34, 1.00);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Roboto Flex Variable", "Roboto Flex", system-ui, -apple-system, sans-serif;
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  transition:
+    background-color var(--md-sys-motion-spring-default-effects),
+    color var(--md-sys-motion-spring-default-effects);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Material Symbols Rounded setup with expressive fill & weight transitions */
+.material-symbols-rounded {
+  font-family: "Material Symbols Rounded";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: "FILL" 0, "wght" 450, "GRAD" 0, "opsz" 24;
+  transition: font-variation-settings var(--md-sys-motion-spring-fast-effects);
+  user-select: none;
+}
+
+.material-symbols-rounded.filled {
+  font-variation-settings: "FILL" 1, "wght" 600, "GRAD" 25, "opsz" 24;
+}
+
+/* =====================================================================
+   M3 Expressive Emphasized Typography Scale (Roboto Flex Variable Axes)
+   ===================================================================== */
+.m3-display-emphasized {
+  font-family: "Roboto Flex Variable", "Roboto Flex", sans-serif;
+  font-variation-settings: "wght" 850, "wdth" 118, "GRAD" 50, "opsz" 72;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.m3-headline-large-emphasized {
+  font-family: "Roboto Flex Variable", "Roboto Flex", sans-serif;
+  font-variation-settings: "wght" 800, "wdth" 112, "GRAD" 40, "opsz" 40;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+
+.m3-headline-medium-emphasized {
+  font-family: "Roboto Flex Variable", "Roboto Flex", sans-serif;
+  font-variation-settings: "wght" 760, "wdth" 110, "GRAD" 30, "opsz" 32;
+  letter-spacing: -0.015em;
+  line-height: 1.18;
+}
+
+.m3-title-large-emphasized {
+  font-family: "Roboto Flex Variable", "Roboto Flex", sans-serif;
+  font-variation-settings: "wght" 740, "wdth" 106, "GRAD" 25, "opsz" 24;
+  letter-spacing: -0.01em;
+  line-height: 1.24;
+}
+
+.m3-title-medium-emphasized {
+  font-family: "Roboto Flex Variable", "Roboto Flex", sans-serif;
+  font-variation-settings: "wght" 680, "wdth" 104, "GRAD" 15, "opsz" 18;
+  letter-spacing: 0em;
+  line-height: 1.3;
+}
+
+.m3-label-large-emphasized {
+  font-family: "Roboto Flex Variable", "Roboto Flex", sans-serif;
+  font-variation-settings: "wght" 700, "wdth" 105, "GRAD" 20, "opsz" 16;
+  letter-spacing: 0.01em;
+}
+
+/* =====================================================================
+   M3 Expressive Interactive Shape Morphing Buttons & Connected Groups
+   ===================================================================== */
+.m3-expressive-btn {
+  border-radius: var(--md-sys-shape-corner-full);
+  transition:
+    transform var(--md-sys-motion-spring-fast-spatial),
+    background-color var(--md-sys-motion-spring-fast-effects),
+    color var(--md-sys-motion-spring-fast-effects),
+    box-shadow var(--md-sys-motion-spring-fast-effects);
+  cursor: pointer;
+}
+
+.m3-expressive-btn:hover:not(:disabled) {
+  border-radius: 18px;
+  transform: translateY(-1px) scale(1.015);
+}
+
+.m3-expressive-btn:active:not(:disabled) {
+  border-radius: 12px;
+  transform: scale(0.95);
+}
+
+/* Connected Button Group (replaces legacy segmented buttons in M3 Expressive) */
+.m3-connected-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.m3-connected-item {
+  border-radius: 8px;
+  transition:
+    border-radius var(--md-sys-motion-spring-fast-spatial),
+    transform var(--md-sys-motion-spring-fast-spatial),
+    padding var(--md-sys-motion-spring-fast-spatial),
+    background-color var(--md-sys-motion-spring-fast-effects),
+    color var(--md-sys-motion-spring-fast-effects),
+    font-variation-settings var(--md-sys-motion-spring-fast-effects);
+  cursor: pointer;
+}
+
+.m3-connected-item:first-child {
+  border-top-left-radius: 9999px;
+  border-bottom-left-radius: 9999px;
+}
+
+.m3-connected-item:last-child {
+  border-top-right-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+}
+
+.m3-connected-item[data-active="true"] {
+  border-radius: 9999px !important;
+  font-variation-settings: "wght" 720, "wdth" 106, "GRAD" 25;
+}
+
+.m3-connected-item:active {
+  border-radius: 12px !important;
+  transform: scale(0.94);
+}
+
+/* Custom subtle M3 Expressive scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--md-sys-color-outline);
+}
