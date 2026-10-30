@@ -4,7 +4,7 @@ Someday, I couldn't decidd where to eat, so I built this.
 
 It's a roulette wheel of nearby restaurants, cafés, bakeries, and eateries, with a Material 3 Expressive UI.
 
-> ![IMPORTANT]
+> [!IMPORTANT]
 > The current geocoding backend is **limited to France** (BAN / data.gouv.fr), but the Foursquare Places API can discover venues worldwide. If you want to use Foodlette outside of France, you can still search for nearby restaurants, cafés, bakeries, and eateries by providing a valid Foursquare Places API key.
 
 ## API stack
