@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import type { RestaurantImage } from "@/types/restaurant";
+import { sanitizeExternalHttpUrl } from "@/lib/sanitize";
 
 export const FOURSQUARE_MODERN_BASE = "https://places-api.foursquare.com";
 export const FOURSQUARE_LEGACY_V3_BASE = "https://api.foursquare.com/v3";
@@ -372,42 +373,41 @@ export const FSQ_V3_FOOD_CATEGORIES = "13065,13032,13002,13040";
  * 1) Request header `x-foursquare-api-key` (configured via the in-app M3 Expressive modal), or
  * 2) Environment variable `FOURSQUARE_API_KEY` / `NEXT_PUBLIC_FOURSQUARE_API_KEY`.
  */
-export function resolveFoursquareApiKey(request: NextRequest): {
-  apiKey: string | null;
-  fromEnv: boolean;
-} {
-  const headerKey = request.headers
-    .get("x-foursquare-api-key")
-    ?.replace(/^Bearer\s+/i, "")
-    .trim();
-  if (headerKey) {
-    return { apiKey: headerKey, fromEnv: false };
-  }
-
-  const envKey = (
-    process.env.FOURSQUARE_API_KEY ||
-    process.env.NEXT_PUBLIC_FOURSQUARE_API_KEY ||
-    ""
-  )
+function getConfiguredServerFoursquareKey(): string | null {
+  const envKey = (process.env.FOURSQUARE_API_KEY || "")
     .replace(/^Bearer\s+/i, "")
     .trim();
 
   if (envKey && envKey !== "YOUR_FOURSQUARE_API_KEY_HERE") {
-    return { apiKey: envKey, fromEnv: true };
+    return envKey;
+  }
+  return null;
+}
+
+export function resolveFoursquareApiKey(request: NextRequest): {
+  apiKey: string | null;
+  fromEnv: boolean;
+} {
+  // Always prioritize server-only FOURSQUARE_API_KEY when configured so untrusted
+  // client headers cannot override or probe server key behavior in production.
+  const serverKey = getConfiguredServerFoursquareKey();
+  if (serverKey) {
+    return { apiKey: serverKey, fromEnv: true };
+  }
+
+  const headerKey = request.headers
+    .get("x-foursquare-api-key")
+    ?.replace(/^Bearer\s+/i, "")
+    .trim();
+  if (headerKey && /^[\x21-\x7E]{12,128}$/.test(headerKey)) {
+    return { apiKey: headerKey, fromEnv: false };
   }
 
   return { apiKey: null, fromEnv: false };
 }
 
 export function hasServerFoursquareKey(): boolean {
-  const envKey = (
-    process.env.FOURSQUARE_API_KEY ||
-    process.env.NEXT_PUBLIC_FOURSQUARE_API_KEY ||
-    ""
-  )
-    .replace(/^Bearer\s+/i, "")
-    .trim();
-  return Boolean(envKey && envKey !== "YOUR_FOURSQUARE_API_KEY_HERE");
+  return Boolean(getConfiguredServerFoursquareKey());
 }
 
 /**
@@ -570,15 +570,19 @@ export async function fetchPanoramaxStreetPhotos(
 
     const imgs: RestaurantImage[] = [];
     for (const feat of features) {
-      const sdHref =
+      const rawHref =
         feat?.assets?.sd?.href ||
         feat?.assets?.hd?.href ||
         feat?.assets?.thumb?.href;
-      if (typeof sdHref === "string" && sdHref.startsWith("http")) {
+      const safeHref =
+        typeof rawHref === "string"
+          ? sanitizeExternalHttpUrl(rawHref, { httpsOnly: true })
+          : undefined;
+      if (safeHref) {
         const provider =
           feat?.providers?.[0]?.name || "Panoramax / IGN / OpenStreetMap";
         imgs.push({
-          url: sdHref,
+          url: safeHref,
           caption: `Street view near ${venueName} (${provider})`,
           source: "Panoramax Street View",
           attribution: provider,

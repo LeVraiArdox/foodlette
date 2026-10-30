@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 /**
@@ -14,7 +15,18 @@ interface CacheEntry<T = unknown> {
   value: T;
 }
 
-const CACHE_DIR = path.join(process.cwd(), ".cache");
+function resolveWritableCacheDir(): string {
+  const localDir = path.join(process.cwd(), ".cache");
+  try {
+    fs.mkdirSync(localDir, { recursive: true, mode: 0o700 });
+    fs.accessSync(localDir, fs.constants.W_OK);
+    return localDir;
+  } catch {
+    return path.join(os.tmpdir(), "foodlette-cache");
+  }
+}
+
+const CACHE_DIR = resolveWritableCacheDir();
 const CACHE_FILE = path.join(CACHE_DIR, "foodlette-places-cache.json");
 const MAX_CACHE_ENTRIES = 600;
 
@@ -75,12 +87,15 @@ function scheduleDiskFlush() {
         memoryCache.delete(oldestKey);
       }
 
-      fs.mkdirSync(CACHE_DIR, { recursive: true });
+      fs.mkdirSync(CACHE_DIR, { recursive: true, mode: 0o700 });
       const serializable: Record<string, CacheEntry> = {};
       for (const [k, entry] of memoryCache.entries()) {
         serializable[k] = entry;
       }
-      fs.writeFileSync(CACHE_FILE, JSON.stringify(serializable), "utf8");
+      fs.writeFileSync(CACHE_FILE, JSON.stringify(serializable), {
+        encoding: "utf8",
+        mode: 0o600,
+      });
     } catch {
       // Ignore filesystem write errors in restricted environments
     }

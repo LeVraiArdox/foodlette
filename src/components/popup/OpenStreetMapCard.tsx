@@ -3,6 +3,7 @@
 import React from "react";
 import type { GeoLocation, Restaurant } from "@/types/restaurant";
 import { formatHaversineDistance } from "@/lib/haversine";
+import { escapeHtml, sanitizeMaterialIconName } from "@/lib/sanitize";
 
 interface OpenStreetMapCardProps {
   restaurant: Restaurant;
@@ -65,6 +66,10 @@ export function OpenStreetMapCard({
       }).addTo(map);
 
       // Custom M3 Expressive Restaurant Marker (`divIcon` avoids bundler PNG issues)
+      const safeIconName = sanitizeMaterialIconName(
+        restaurant.primaryIcon,
+        "restaurant"
+      );
       const venueIcon = L.divIcon({
         className: "foodlette-osm-marker",
         html: `<div style="
@@ -81,7 +86,7 @@ export function OpenStreetMapCard({
           justify-content: center;
         ">
           <span class="material-symbols-rounded filled" style="transform: rotate(45deg); font-size: 20px;">
-            ${restaurant.primaryIcon || "restaurant"}
+            ${safeIconName}
           </span>
         </div>`,
         iconSize: [40, 40],
@@ -94,12 +99,11 @@ export function OpenStreetMapCard({
       }).addTo(map);
 
       venueMarker.bindPopup(
-        `<strong>${restaurant.name.replace(/</g, "&lt;")}</strong><br/><span style="font-size:12px;">${restaurant.address.formatted.replace(
-          /</g,
-          "&lt;"
-        )}</span><br/><span style="font-size:11px;opacity:0.8;">Haversine: ${formatHaversineDistance(
-          restaurant.distanceMeters
-        )} (${restaurant.compassDirection})</span>`
+        `<strong>${escapeHtml(restaurant.name)}</strong><br/><span style="font-size:12px;">${escapeHtml(
+          restaurant.address.formatted
+        )}</span><br/><span style="font-size:11px;opacity:0.8;">Haversine: ${escapeHtml(
+          formatHaversineDistance(restaurant.distanceMeters)
+        )} (${escapeHtml(restaurant.compassDirection)})</span>`
       );
 
       if (hasDistinctOrigin && originLocation) {
@@ -122,9 +126,8 @@ export function OpenStreetMapCard({
         })
           .addTo(map)
           .bindPopup(
-            `<strong>${originLocation.label.replace(
-              /</g,
-              "&lt;"
+            `<strong>${escapeHtml(
+              originLocation.label
             )}</strong><br/><span style="font-size:11px;">Starting point</span>`
           );
 

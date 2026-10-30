@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import type { LocationSuggestion } from "@/types/restaurant";
 import { hasServerFoursquareKey } from "@/lib/foursquare";
 import {
+  extractTrustedPublicClientIp,
+  guardApiRequest,
+  isValidCoordinates,
+} from "@/lib/api-security";
+import {
   getServerCache,
   setServerCache,
   TTL_GEOCODE_MS,
@@ -57,30 +62,6 @@ interface IpGeoCoordinateResult {
   city?: string;
   postal?: string;
   region?: string;
-}
-
-function extractPublicClientIp(request: NextRequest): string | null {
-  const raw =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip")?.trim() ||
-    "";
-  if (!raw) return null;
-
-  const ip = raw.replace(/^::ffff:/i, "");
-  if (
-    ip === "127.0.0.1" ||
-    ip === "::1" ||
-    ip === "localhost" ||
-    ip.startsWith("127.") ||
-    ip.startsWith("10.") ||
-    ip.startsWith("192.168.") ||
-    ip.startsWith("0.") ||
-    /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip) ||
-    /^(fc|fd|fe80):/i.test(ip)
-  ) {
-    return null;
-  }
-  return ip;
 }
 
 async function reverseGeocodeBan(
@@ -285,8 +266,11 @@ async function resolveNetworkIpCoordinates(
 }
 
 export async function GET(request: NextRequest) {
+  const blocked = guardApiRequest(request, "geocode", 90);
+  if (blocked) return blocked;
+
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q")?.trim();
+  const query = searchParams.get("q")?.trim().slice(0, 160);
   const lat = searchParams.get("lat");
   const lon = searchParams.get("lon");
   const statusCheck = searchParams.get("status") === "1";
@@ -303,7 +287,7 @@ export async function GET(request: NextRequest) {
   // 0) Platform-Independent Network Geolocation Fallback + BAN Commune Lookup
   //    (used when an authorized browser lacks a working W3C geolocation backend)
   if (locateFallback) {
-    const clientIp = extractPublicClientIp(request);
+    const clientIp = extractTrustedPublicClientIp(request);
     const ipGeo = await resolveNetworkIpCoordinates(clientIp);
     if (!ipGeo) {
       return NextResponse.json(
@@ -336,9 +320,9 @@ export async function GET(request: NextRequest) {
   if (lat && lon) {
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lon);
-    if (isNaN(latitude) || isNaN(longitude)) {
+    if (!isValidCoordinates(latitude, longitude)) {
       return NextResponse.json(
-        { error: "Valid lat and lon are required." },
+        { error: "Valid lat (-90..90) and lon (-180..180) are required." },
         { status: 400 }
       );
     }

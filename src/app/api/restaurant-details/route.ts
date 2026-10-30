@@ -16,6 +16,15 @@ import {
   TTL_DETAILS_MS,
   withInflightDedup,
 } from "@/lib/api-cache";
+import {
+  guardApiRequest,
+  isValidCoordinates,
+  isValidFsqPlaceId,
+} from "@/lib/api-security";
+import {
+  sanitizeExternalHttpUrl,
+  sanitizeInstagramHandle,
+} from "@/lib/sanitize";
 
 interface FoursquarePhotoItem {
   prefix?: string;
@@ -81,14 +90,24 @@ interface FoursquarePlaceDetailsRaw {
 const proOnlyKeyFingerprints = new Set<string>();
 
 export async function GET(request: NextRequest) {
+  const blocked = guardApiRequest(request, "details", 45);
+  if (blocked) return blocked;
+
   const { searchParams } = new URL(request.url);
   const fsqId = searchParams.get("fsqId")?.trim();
   const lat = parseFloat(searchParams.get("lat") || "");
   const lon = parseFloat(searchParams.get("lon") || "");
-  const name = searchParams.get("name")?.trim() || "Restaurant";
+  const name = (searchParams.get("name")?.trim() || "Restaurant").slice(0, 120);
 
   if (!fsqId) {
     return NextResponse.json({ images: [], reviews: [] });
+  }
+
+  if (!isValidFsqPlaceId(fsqId)) {
+    return NextResponse.json(
+      { error: "Invalid venue identifier.", images: [], reviews: [] },
+      { status: 400 }
+    );
   }
 
   const { apiKey } = resolveFoursquareApiKey(request);
@@ -153,19 +172,25 @@ export async function GET(request: NextRequest) {
       if (details?.photos && Array.isArray(details.photos)) {
         details.photos.slice(0, 4).forEach((ph, idx) => {
           if (ph.prefix && ph.suffix) {
-            images.push({
-              url: `${ph.prefix}900x680${ph.suffix}`,
-              caption: `${name} — Foursquare Photo ${idx + 1}`,
-              source: "Foursquare Photo",
-              attribution: "Foursquare",
-            });
+            const safePhotoUrl = sanitizeExternalHttpUrl(
+              `${ph.prefix}900x680${ph.suffix}`,
+              { httpsOnly: true }
+            );
+            if (safePhotoUrl) {
+              images.push({
+                url: safePhotoUrl,
+                caption: `${name} — Foursquare Photo ${idx + 1}`,
+                source: "Foursquare Photo",
+                attribution: "Foursquare",
+              });
+            }
           }
         });
       }
 
       // Open-data Panoramax (IGN / OpenStreetMap France) street-level imagery fallback
       // when Foursquare Free-tier keys don't include Premium photos!
-      if (images.length === 0 && !isNaN(lat) && !isNaN(lon)) {
+      if (images.length === 0 && isValidCoordinates(lat, lon)) {
         const streetImgs = await fetchPanoramaxStreetPhotos(lat, lon, name);
         images.push(...streetImgs);
       }
@@ -238,8 +263,8 @@ export async function GET(request: NextRequest) {
           : undefined,
         phone: details?.tel,
         email: details?.email,
-        website: details?.website,
-        instagram: details?.social_media?.instagram,
+        website: sanitizeExternalHttpUrl(details?.website),
+        instagram: sanitizeInstagramHandle(details?.social_media?.instagram),
       };
 
       setServerCache(cacheKey, result, TTL_DETAILS_MS);

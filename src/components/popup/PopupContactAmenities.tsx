@@ -2,6 +2,12 @@
 
 import React from "react";
 import type { RestaurantContact, VenueFeatureBadge } from "@/types/restaurant";
+import {
+  sanitizeEmailHref,
+  sanitizeExternalHttpUrl,
+  sanitizeInstagramHandle,
+  sanitizePhoneHref,
+} from "@/lib/sanitize";
 
 interface PopupContactAmenitiesProps {
   contact: RestaurantContact;
@@ -20,6 +26,13 @@ export function PopupContactAmenities({
   email,
   featureBadges,
 }: PopupContactAmenitiesProps) {
+  const safePhoneHref = sanitizePhoneHref(phone);
+  const safeWebsiteUrl = sanitizeExternalHttpUrl(website);
+  const safeInstagramHandle = sanitizeInstagramHandle(instagram);
+  const safeEmailHref = sanitizeEmailHref(email);
+  const safeOsmUrl =
+    sanitizeExternalHttpUrl(contact.osmUri) || "https://www.openstreetmap.org";
+
   return (
     <>
       {/* Contact, Foursquare & OpenStreetMap Links Row */}
@@ -29,9 +42,9 @@ export function PopupContactAmenities({
           backgroundColor: "var(--md-sys-color-surface-container)",
         }}
       >
-        {phone && (
+        {phone && safePhoneHref && (
           <a
-            href={`tel:${phone}`}
+            href={safePhoneHref}
             className="m3-expressive-btn inline-flex items-center gap-1.5 px-3.5 py-2 text-xs m3-label-large-emphasized"
             style={{
               backgroundColor: "var(--md-sys-color-secondary-container)",
@@ -45,9 +58,9 @@ export function PopupContactAmenities({
           </a>
         )}
 
-        {website && (
+        {safeWebsiteUrl && (
           <a
-            href={website}
+            href={safeWebsiteUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="m3-expressive-btn inline-flex items-center gap-1.5 px-3.5 py-2 text-xs m3-label-large-emphasized"
@@ -63,9 +76,11 @@ export function PopupContactAmenities({
           </a>
         )}
 
-        {instagram && (
+        {safeInstagramHandle && (
           <a
-            href={`https://instagram.com/${instagram.replace(/^@/, "")}`}
+            href={`https://instagram.com/${encodeURIComponent(
+              safeInstagramHandle
+            )}`}
             target="_blank"
             rel="noopener noreferrer"
             className="m3-expressive-btn inline-flex items-center gap-1.5 px-3.5 py-2 text-xs m3-label-large-emphasized"
@@ -78,13 +93,13 @@ export function PopupContactAmenities({
             <span className="material-symbols-rounded text-[16px]">
               photo_camera
             </span>
-            <span>@{instagram.replace(/^@/, "")}</span>
+            <span>@{safeInstagramHandle}</span>
           </a>
         )}
 
-        {email && (
+        {email && safeEmailHref && (
           <a
-            href={`mailto:${email}`}
+            href={safeEmailHref}
             className="m3-expressive-btn inline-flex items-center gap-1.5 px-3.5 py-2 text-xs m3-label-large-emphasized"
             style={{
               backgroundColor:
@@ -98,7 +113,7 @@ export function PopupContactAmenities({
         )}
 
         <a
-          href={contact.osmUri}
+          href={safeOsmUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="m3-expressive-btn inline-flex items-center gap-1.5 px-3.5 py-2 text-xs m3-label-large-emphasized"

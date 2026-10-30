@@ -4,8 +4,8 @@ import React from "react";
 import { STORAGE_KEY_FSQ_API } from "@/constants/foodlette";
 
 /**
- * Manages Foursquare Places API key state across both server (.env / .env.local)
- * and browser localStorage overrides, along with key dialog visibility & errors.
+ * Manages Foursquare Places API key state across server (`FOURSQUARE_API_KEY` in `.env`)
+ * and optional tab-scoped `sessionStorage` BYOK overrides when no server key is configured.
  */
 export function useFoursquareKey() {
   const [clientApiKey, setClientApiKey] = React.useState<string>("");
@@ -16,14 +16,19 @@ export function useFoursquareKey() {
     null
   );
 
-  // Load saved Foursquare API key on mount, and check server .env key status
+  // Check server .env key status on mount, and purge any legacy persistent localStorage key
   React.useEffect(() => {
-    const storedKey =
-      typeof window !== "undefined"
-        ? localStorage.getItem(STORAGE_KEY_FSQ_API) || ""
-        : "";
-    if (storedKey) {
-      setClientApiKey(storedKey);
+    let sessionKey = "";
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem(STORAGE_KEY_FSQ_API);
+        sessionKey = window.sessionStorage.getItem(STORAGE_KEY_FSQ_API) || "";
+      } catch {
+        // Ignore storage access errors
+      }
+    }
+    if (sessionKey) {
+      setClientApiKey(sessionKey);
     }
 
     fetch("/api/geocode?status=1")
@@ -31,7 +36,15 @@ export function useFoursquareKey() {
       .then((data: { hasServerKey?: boolean }) => {
         const srv = Boolean(data.hasServerKey);
         setHasServerKey(srv);
-        if (!srv && !storedKey) {
+        if (srv) {
+          // Server key is active; clear any tab-stored client key so secrets aren't kept in browser storage
+          setClientApiKey("");
+          try {
+            window.sessionStorage.removeItem(STORAGE_KEY_FSQ_API);
+          } catch {
+            // Ignore
+          }
+        } else if (!sessionKey) {
           setApiKeyDialogOpen(true);
         }
       })
@@ -43,26 +56,36 @@ export function useFoursquareKey() {
 
   const apiHeaders = React.useMemo<Record<string, string>>(() => {
     const headers: Record<string, string> = {};
-    if (clientApiKey.trim()) {
+    if (!hasServerKey && clientApiKey.trim()) {
       headers["x-foursquare-api-key"] = clientApiKey.trim();
     }
     return headers;
-  }, [clientApiKey]);
+  }, [hasServerKey, clientApiKey]);
 
   const hasActiveApiKey = hasServerKey || Boolean(clientApiKey.trim());
 
   const saveClientKey = React.useCallback((newKey: string) => {
-    setClientApiKey(newKey);
+    const trimmed = newKey.trim();
+    setClientApiKey(trimmed);
     setApiKeyErrorMsg(null);
     if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY_FSQ_API, newKey);
+      try {
+        window.sessionStorage.setItem(STORAGE_KEY_FSQ_API, trimmed);
+      } catch {
+        // Ignore
+      }
     }
   }, []);
 
   const clearClientKey = React.useCallback(() => {
     setClientApiKey("");
     if (typeof window !== "undefined") {
-      localStorage.removeItem(STORAGE_KEY_FSQ_API);
+      try {
+        window.sessionStorage.removeItem(STORAGE_KEY_FSQ_API);
+        window.localStorage.removeItem(STORAGE_KEY_FSQ_API);
+      } catch {
+        // Ignore
+      }
     }
   }, []);
 

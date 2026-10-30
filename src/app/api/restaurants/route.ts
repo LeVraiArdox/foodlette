@@ -22,6 +22,11 @@ import {
   TTL_NEARBY_MS,
   withInflightDedup,
 } from "@/lib/api-cache";
+import { guardApiRequest, isValidCoordinates } from "@/lib/api-security";
+import {
+  sanitizeExternalHttpUrl,
+  sanitizeInstagramHandle,
+} from "@/lib/sanitize";
 
 interface FoursquarePlaceItem {
   fsq_place_id?: string;
@@ -59,6 +64,9 @@ interface FoursquareSearchResponse {
 }
 
 export async function GET(request: NextRequest) {
+  const blocked = guardApiRequest(request, "restaurants", 30);
+  if (blocked) return blocked;
+
   const { searchParams } = new URL(request.url);
   const lat = parseFloat(searchParams.get("lat") || "");
   const lon = parseFloat(searchParams.get("lon") || "");
@@ -67,9 +75,9 @@ export async function GET(request: NextRequest) {
     15000
   );
 
-  if (isNaN(lat) || isNaN(lon)) {
+  if (!isValidCoordinates(lat, lon)) {
     return NextResponse.json(
-      { error: "Valid latitude and longitude are required." },
+      { error: "Valid latitude (-90..90) and longitude (-180..180) are required." },
       { status: 400 }
     );
   }
@@ -234,8 +242,8 @@ export async function GET(request: NextRequest) {
           contact: {
             phone: item.tel,
             email: item.email,
-            website: item.website,
-            instagram: item.social_media?.instagram,
+            website: sanitizeExternalHttpUrl(item.website),
+            instagram: sanitizeInstagramHandle(item.social_media?.instagram),
             foursquareUri: `https://foursquare.com/v/${encodeURIComponent(
               fsqId
             )}`,
